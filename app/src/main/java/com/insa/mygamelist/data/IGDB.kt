@@ -8,11 +8,11 @@ import com.insa.mygamelist.R
 
 object IGDB {
 
-    private lateinit var covers: List<Cover>
-    private lateinit var games: List<Game>
-    private lateinit var genres : List<Genre>
-    private lateinit var platforms_logos : List<PlatformLogos>
-    private lateinit var platforms : List<Platforms>
+    lateinit var covers: List<Cover>
+    lateinit var games: List<Game>
+    lateinit var genres : List<Genre>
+    lateinit var platforms_logos : List<PlatformLogos>
+    lateinit var platforms : List<Platforms>
 
     private fun <T> loadData(context: Context, resId: Int, typeToken: TypeToken<List<T>>): List<T> {
         return Gson().fromJson(
