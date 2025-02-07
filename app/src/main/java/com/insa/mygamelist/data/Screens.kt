@@ -11,9 +11,12 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.*
 import androidx.compose.ui.tooling.preview.Preview
@@ -47,26 +50,53 @@ fun DetailsScreen(navController: NavHostController, itemId: Long) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(16.dp)
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             game?.let {
+                Text(text = it.name,
+                    fontSize = 30.sp, fontWeight = FontWeight.Bold,
+                    textDecoration = TextDecoration.Underline)
                 AsyncImage(
                     model = "https:" + getUrl(it.cover),
                     contentDescription = "Cover du jeu",
-                    modifier = Modifier.size(200.dp)
+                    modifier = Modifier.size(200.dp),
+                    alignment = Alignment.Center
                 )
                 Spacer(modifier = Modifier.height(8.dp))
-                Text(text = "Nom: ${it.name}", fontSize = 20.sp, fontWeight = FontWeight.Bold)
                 Text(
                     text = "Genres: " + it.genres.mapNotNull { genreId ->
                         IGDB.genres.find { genre -> genre.id == genreId }?.name
-                    }.joinToString(", ")
+                    }.joinToString(", "),
+                    fontStyle = FontStyle.Italic
+
                 )
             } ?: Text(
                 text = "Jeu introuvable",
                 color = Color.Red,
                 fontSize = 18.sp
             )
+            val platformLogosIds = game?.platforms?.mapNotNull { p -> IGDB.platforms.find { it.id == p }?.platform_logo }
+            val platformLogos= platformLogosIds?.mapNotNull {id->IGDB.platforms_logos.find{it.id==id} }
+            Row{
+                platformLogos?.forEach({
+                    AsyncImage(
+                        model = "https:" + it.url,
+                        contentDescription = "platform logo",
+                        modifier = Modifier.size(80.dp)
+                            .padding(horizontal=10.dp)
+                    )
+
+                })
+            }
+            game?.summary?.let {
+                Text(
+                    text= it,
+                    fontSize = 20.sp
+                )
+            }
+
+
         }
     }
 }
