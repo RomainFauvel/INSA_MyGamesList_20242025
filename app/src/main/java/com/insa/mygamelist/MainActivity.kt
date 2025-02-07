@@ -15,13 +15,20 @@ import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import com.insa.mygamelist.data.IGDB
-import com.insa.mygamelist.data.GameListDisplay
 import com.insa.mygamelist.ui.theme.MyGamesListTheme
 import androidx.compose.foundation.lazy.items
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
+import com.insa.mygamelist.data.Details
+import com.insa.mygamelist.data.DetailsScreen
+import com.insa.mygamelist.data.GameList
+import com.insa.mygamelist.data.GameListScreen
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 class MainActivity : ComponentActivity() {
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,20 +38,18 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
 
-            MyGamesListTheme {
-                Scaffold(topBar = {
-                    TopAppBar(colors = topAppBarColors(
-                        containerColor = Color.Cyan,
-                        titleContentColor = Color.Black,
-                    ), title = { Text("My Games List") })
-                }, modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    LazyColumn (modifier =  Modifier.padding(innerPadding)) {
-                        items(IGDB.games) { game ->
-                            GameListDisplay(game)
-                        }
-                    }
+            val navController = rememberNavController()
+
+            NavHost(navController, startDestination = GameList) {
+                composable<GameList> {
+                    GameListScreen(navController)
+                }
+                composable<Details> { backStackEntry ->
+                    val gameId: Int? = backStackEntry.arguments?.getString("id")?.toInt()
+                    DetailsScreen(navController,gameId)
                 }
             }
         }
     }
 }
+

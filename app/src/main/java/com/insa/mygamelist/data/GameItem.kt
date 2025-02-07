@@ -1,6 +1,7 @@
 package com.insa.mygamelist.data
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -18,16 +19,20 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 
 @Composable
-fun GameListDisplay(game: Game) {
+fun GameItem(game: Game,onClick:()->Unit) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .padding(14.dp)
+            .clickable {
+                onClick.invoke()
+            }
     ) {
         Row(
             modifier = Modifier
@@ -53,7 +58,9 @@ fun GameListDisplay(game: Game) {
                 )
                 Text(
                     "Genres: " + game.genres.map { genreId -> IGDB.genres.find { it.id == genreId }?.name }
-                        .joinToString(", ")
+                        .joinToString(", "),
+                    maxLines=1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
         }
