@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -46,60 +47,72 @@ fun DetailsScreen(navController: NavHostController, itemId: Long) {
             )
         }
     ) { innerPadding ->
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            game?.let {
-                Text(text = it.name,
-                    fontSize = 30.sp, fontWeight = FontWeight.Bold,
-                    textDecoration = TextDecoration.Underline)
-                AsyncImage(
-                    model = "https:" + getUrl(it.cover),
-                    contentDescription = "Cover du jeu",
-                    modifier = Modifier.size(200.dp),
-                    alignment = Alignment.Center
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "Genres: " + it.genres.mapNotNull { genreId ->
-                        IGDB.genres.find { genre -> genre.id == genreId }?.name
-                    }.joinToString(", "),
-                    fontStyle = FontStyle.Italic
-
-                )
-            } ?: Text(
-                text = "Jeu introuvable",
-                color = Color.Red,
-                fontSize = 18.sp
-            )
-            val platformLogosIds = game?.platforms?.mapNotNull { p -> IGDB.platforms.find { it.id == p }?.platform_logo }
-            val platformLogos= platformLogosIds?.mapNotNull {id->IGDB.platforms_logos.find{it.id==id} }
-            Row{
-                platformLogos?.forEach({
-                    AsyncImage(
-                        model = "https:" + it.url,
-                        contentDescription = "platform logo",
-                        modifier = Modifier.size(80.dp)
-                            .padding(horizontal=10.dp)
+            item {
+                game?.let {
+                    Text(
+                        text = it.name,
+                        fontSize = 30.sp,
+                        fontWeight = FontWeight.Bold,
+                        textDecoration = TextDecoration.Underline
                     )
-
-                })
-            }
-            game?.summary?.let {
-                Text(
-                    text= it,
-                    fontSize = 20.sp
+                    Spacer(modifier = Modifier.height(12.dp))
+                    AsyncImage(
+                        model = "https:" + getUrl(it.cover),
+                        contentDescription = "Cover du jeu",
+                        modifier = Modifier.size(200.dp),
+                        alignment = Alignment.Center
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = it.genres.mapNotNull { genreId ->
+                            IGDB.genres.find { genre -> genre.id == genreId }?.name
+                        }.joinToString(", "),
+                        fontStyle = FontStyle.Italic
+                    )
+                } ?: Text(
+                    text = "Jeu introuvable",
+                    color = Color.Red,
+                    fontSize = 18.sp
                 )
             }
 
+            item {
+                val platformLogosIds = game?.platforms?.mapNotNull { p -> IGDB.platforms.find { it.id == p }?.platform_logo }
+                val platformLogos = platformLogosIds?.mapNotNull { id -> IGDB.platforms_logos.find { it.id == id } }
 
+                LazyRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    items(platformLogos ?: emptyList()) { platformLogo ->
+                        AsyncImage(
+                            model = "https:" + platformLogo.url,
+                            contentDescription = "Platform logo",
+                            modifier = Modifier.size(80.dp)
+                        )
+                    }
+                }
+            }
+
+            item {
+                game?.summary?.let {
+                    Text(
+                        text = it,
+                        fontSize = 20.sp
+                    )
+                }
+            }
         }
     }
 }
+
 
 
 @OptIn(ExperimentalMaterial3Api::class)
