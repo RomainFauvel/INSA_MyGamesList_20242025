@@ -45,7 +45,7 @@ class MainActivity : ComponentActivity() {
                     GameListScreen(navController)
                 }
                 composable<Details> { backStackEntry ->
-                    val gameId: Int? = backStackEntry.arguments?.getString("id")?.toInt()
+                    val gameId: Long = backStackEntry.toRoute<Details>().gameId
                     DetailsScreen(navController,gameId)
                 }
             }
