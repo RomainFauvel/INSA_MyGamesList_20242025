@@ -10,7 +10,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -61,6 +67,21 @@ fun GameItem(game: Game,onClick:()->Unit) {
                         .joinToString(", "),
                     maxLines=1,
                     overflow = TextOverflow.Ellipsis
+                )
+            }
+            IconButton(
+                onClick = { game.is_favorite = !game.is_favorite },
+                modifier = Modifier
+                    .size(48.dp)
+                    .background(
+                        color = if (game.is_favorite) Color.Red else Color.Gray,
+                        shape = CircleShape
+                    )
+            ) {
+                Icon(
+                    imageVector = if (game.is_favorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                    contentDescription = if (game.is_favorite) "Remove from favorites" else "Add to favorites",
+                    tint = Color.White
                 )
             }
         }

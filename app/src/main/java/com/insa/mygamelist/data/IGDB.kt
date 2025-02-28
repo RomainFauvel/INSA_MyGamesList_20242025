@@ -27,18 +27,16 @@ object IGDB {
         genres = loadData(context, R.raw.genres, object : TypeToken<List<Genre>>(){})
         platforms_logos = loadData(context, R.raw.platform_logos, object : TypeToken<List<PlatformLogos>>(){})
         platforms = loadData(context, R.raw.platforms, object : TypeToken<List<Platforms>>(){})
-        /*Log.d("Covers", "Covers : " + covers)
-        Log.d("Covers", "Games : " + games)
-        Log.d("Covers", "Genres : " + genres)
-        Log.d("Covers", "PlatformsLogos : " + platforms_logos)
-        Log.d("Covers", "Platforms" + platforms) */
+        for (game in games) {
+            game.is_favorite = false
+        }
     }
 }
 
 data class Cover(val id: Long, val url: String)
 
 data class Game(val id: Long, val cover: Long, val first_release_date: Long, val genres: List<Long>,
-    val name: String, val platforms : List<Long>, val summary: String, val toal_rating: Float)
+                val name: String, val platforms : List<Long>, val summary: String, val toal_rating: Float, var is_favorite: Boolean)
 
 data class Genre(val id:Long,val name:String)
 
