@@ -10,6 +10,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
@@ -32,90 +34,109 @@ import com.insa.mygamelist.ui.theme.MyGamesListTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-    fun DetailsScreen(navController: NavHostController, itemId: Long) {
-        val game = IGDB.games.find { it.id == itemId }
+fun DetailsScreen(navController: NavHostController, itemId: Long) {
+    val game = IGDB.games.find { it.id == itemId }
 
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    colors = topAppBarColors(
-                        containerColor = Color.Cyan,
-                        titleContentColor = Color.Black,
-                    ),
-                    title = { Text(game?.name ?: "Jeu non trouvé") },
-                    navigationIcon = {
-                        IconButton(onClick = { navController.popBackStack() }) {
-                            Icon(Icons.Default.ArrowBack, contentDescription = "Retour")
-                        }
+    var isFavorite by remember { mutableStateOf(game?.is_favorite ?: false) }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                colors = topAppBarColors(
+                    containerColor = Color.Cyan,
+                    titleContentColor = Color.Black,
+                ),
+                title = { Text(game?.name ?: "Jeu non trouvé") },
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Retour")
                     }
-                )
-            }
-        ) { innerPadding ->
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-                    .padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                item {
-                    game?.let {
+                }
+            )
+        }
+    ) { innerPadding ->
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            item {
+                game?.let {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Text(
                             text = it.name,
                             fontSize = 30.sp,
                             fontWeight = FontWeight.Bold,
-                            textDecoration = TextDecoration.Underline
+                            textDecoration = TextDecoration.Underline,
+                            modifier = Modifier.weight(1f)
                         )
-                        Spacer(modifier = Modifier.height(12.dp))
-                        AsyncImage(
-                            model = "https:" + getUrl(it.cover),
-                            contentDescription = "Cover du jeu",
-                            modifier = Modifier.size(200.dp),
-                            alignment = Alignment.Center
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = it.genres.mapNotNull { genreId ->
-                                IGDB.genres.find { genre -> genre.id == genreId }?.name
-                            }.joinToString(", "),
-                            fontStyle = FontStyle.Italic
-                        )
-                    } ?: Text(
-                        text = "Jeu introuvable",
-                        color = Color.Red,
-                        fontSize = 18.sp
-                    )
-                }
-
-                item {
-                    val platformLogosIds = game?.platforms?.mapNotNull { p -> IGDB.platforms.find { it.id == p }?.platform_logo }
-                    val platformLogos = platformLogosIds?.mapNotNull { id -> IGDB.platforms_logos.find { it.id == id } }
-
-                    LazyRow(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        items(platformLogos ?: emptyList()) { platformLogo ->
-                            AsyncImage(
-                                model = "https:" + platformLogo.url,
-                                contentDescription = "Platform logo",
-                                modifier = Modifier.size(80.dp)
+                        IconButton(onClick = {
+                            isFavorite = !isFavorite
+                            game.is_favorite = isFavorite
+                        }) {
+                            Icon(
+                                imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                contentDescription = if (isFavorite) "Retirer des favoris" else "Ajouter aux favoris",
+                                tint = Color.Red
                             )
                         }
                     }
-                }
+                    Spacer(modifier = Modifier.height(12.dp))
+                    AsyncImage(
+                        model = "https:" + getUrl(it.cover),
+                        contentDescription = "Cover du jeu",
+                        modifier = Modifier.size(200.dp),
+                        alignment = Alignment.Center
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = it.genres.mapNotNull { genreId ->
+                            IGDB.genres.find { genre -> genre.id == genreId }?.name
+                        }.joinToString(", "),
+                        fontStyle = FontStyle.Italic
+                    )
+                } ?: Text(
+                    text = "Jeu introuvable",
+                    color = Color.Red,
+                    fontSize = 18.sp
+                )
+            }
 
-                item {
-                    game?.summary?.let {
-                        Text(
-                            text = it,
-                            fontSize = 20.sp
+            item {
+                val platformLogosIds = game?.platforms?.mapNotNull { p -> IGDB.platforms.find { it.id == p }?.platform_logo }
+                val platformLogos = platformLogosIds?.mapNotNull { id -> IGDB.platforms_logos.find { it.id == id } }
+
+                LazyRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    items(platformLogos ?: emptyList()) { platformLogo ->
+                        AsyncImage(
+                            model = "https:" + platformLogo.url,
+                            contentDescription = "Platform logo",
+                            modifier = Modifier.size(80.dp)
                         )
                     }
                 }
             }
+
+            item {
+                game?.summary?.let {
+                    Text(
+                        text = it,
+                        fontSize = 20.sp
+                    )
+                }
+            }
         }
     }
+}
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
