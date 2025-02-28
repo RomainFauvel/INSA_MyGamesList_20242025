@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -119,7 +120,7 @@ import com.insa.mygamelist.ui.theme.MyGamesListTheme
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GameListScreen(navController: NavHostController) {
-    var searchText by remember { mutableStateOf("") }
+    var searchText by rememberSaveable { mutableStateOf("") }
 
     MyGamesListTheme {
         Scaffold(
@@ -162,7 +163,7 @@ fun GameListScreen(navController: NavHostController) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchAppBar(searchText: String, onSearchTextChange: (String) -> Unit) {
-    var isSearching by remember { mutableStateOf(false) }
+    var isSearching by rememberSaveable { mutableStateOf(false) }
 
     TopAppBar(
         colors = topAppBarColors(
