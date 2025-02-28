@@ -9,6 +9,8 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
 import androidx.compose.runtime.*
@@ -28,90 +30,90 @@ import com.insa.mygamelist.ui.theme.MyGamesListTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DetailsScreen(navController: NavHostController, itemId: Long) {
-    val game = IGDB.games.find { it.id == itemId }
+    fun DetailsScreen(navController: NavHostController, itemId: Long) {
+        val game = IGDB.games.find { it.id == itemId }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                colors = topAppBarColors(
-                    containerColor = Color.Cyan,
-                    titleContentColor = Color.Black,
-                ),
-                title = { Text(game?.name ?: "Jeu non trouvé") },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Retour")
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    colors = topAppBarColors(
+                        containerColor = Color.Cyan,
+                        titleContentColor = Color.Black,
+                    ),
+                    title = { Text(game?.name ?: "Jeu non trouvé") },
+                    navigationIcon = {
+                        IconButton(onClick = { navController.popBackStack() }) {
+                            Icon(Icons.Default.ArrowBack, contentDescription = "Retour")
+                        }
                     }
-                }
-            )
-        }
-    ) { innerPadding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            item {
-                game?.let {
-                    Text(
-                        text = it.name,
-                        fontSize = 30.sp,
-                        fontWeight = FontWeight.Bold,
-                        textDecoration = TextDecoration.Underline
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    AsyncImage(
-                        model = "https:" + getUrl(it.cover),
-                        contentDescription = "Cover du jeu",
-                        modifier = Modifier.size(200.dp),
-                        alignment = Alignment.Center
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = it.genres.mapNotNull { genreId ->
-                            IGDB.genres.find { genre -> genre.id == genreId }?.name
-                        }.joinToString(", "),
-                        fontStyle = FontStyle.Italic
-                    )
-                } ?: Text(
-                    text = "Jeu introuvable",
-                    color = Color.Red,
-                    fontSize = 18.sp
                 )
             }
-
-            item {
-                val platformLogosIds = game?.platforms?.mapNotNull { p -> IGDB.platforms.find { it.id == p }?.platform_logo }
-                val platformLogos = platformLogosIds?.mapNotNull { id -> IGDB.platforms_logos.find { it.id == id } }
-
-                LazyRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    items(platformLogos ?: emptyList()) { platformLogo ->
+        ) { innerPadding ->
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                item {
+                    game?.let {
+                        Text(
+                            text = it.name,
+                            fontSize = 30.sp,
+                            fontWeight = FontWeight.Bold,
+                            textDecoration = TextDecoration.Underline
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
                         AsyncImage(
-                            model = "https:" + platformLogo.url,
-                            contentDescription = "Platform logo",
-                            modifier = Modifier.size(80.dp)
+                            model = "https:" + getUrl(it.cover),
+                            contentDescription = "Cover du jeu",
+                            modifier = Modifier.size(200.dp),
+                            alignment = Alignment.Center
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = it.genres.mapNotNull { genreId ->
+                                IGDB.genres.find { genre -> genre.id == genreId }?.name
+                            }.joinToString(", "),
+                            fontStyle = FontStyle.Italic
+                        )
+                    } ?: Text(
+                        text = "Jeu introuvable",
+                        color = Color.Red,
+                        fontSize = 18.sp
+                    )
+                }
+
+                item {
+                    val platformLogosIds = game?.platforms?.mapNotNull { p -> IGDB.platforms.find { it.id == p }?.platform_logo }
+                    val platformLogos = platformLogosIds?.mapNotNull { id -> IGDB.platforms_logos.find { it.id == id } }
+
+                    LazyRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        items(platformLogos ?: emptyList()) { platformLogo ->
+                            AsyncImage(
+                                model = "https:" + platformLogo.url,
+                                contentDescription = "Platform logo",
+                                modifier = Modifier.size(80.dp)
+                            )
+                        }
+                    }
+                }
+
+                item {
+                    game?.summary?.let {
+                        Text(
+                            text = it,
+                            fontSize = 20.sp
                         )
                     }
                 }
             }
-
-            item {
-                game?.summary?.let {
-                    Text(
-                        text = it,
-                        fontSize = 20.sp
-                    )
-                }
-            }
         }
     }
-}
 
 
 
@@ -119,12 +121,8 @@ fun DetailsScreen(navController: NavHostController, itemId: Long) {
 @Composable
 fun GameListScreen(navController: NavHostController){
     MyGamesListTheme {
-        Scaffold(topBar = {
-            TopAppBar(colors = topAppBarColors(
-                containerColor = Color.Cyan,
-                titleContentColor = Color.Black,
-            ), title = { Text("My Games List") })
-        }, modifier = Modifier.fillMaxSize()) { innerPadding ->
+        Scaffold(topBar = { SearchAppBar() }
+            , modifier = Modifier.fillMaxSize()) { innerPadding ->
             LazyColumn (modifier =  Modifier.padding(innerPadding)) {
                 items(IGDB.games) { game ->
                     Log.d("TAG", "GameId" + (game.id).toString())
@@ -133,4 +131,36 @@ fun GameListScreen(navController: NavHostController){
             }
         }
     }
+}
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SearchAppBar() {
+    var searchText by remember { mutableStateOf("") }
+    var isSearching by remember { mutableStateOf(false) }
+
+    TopAppBar(
+        title = {
+            if (isSearching) {
+                TextField(
+                    value = searchText,
+                    onValueChange = { searchText = it },
+                    placeholder = { Text("Rechercher...") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            } else {
+                Text("Mon Application")
+            }
+        },
+        actions = {
+            IconButton(onClick = { isSearching = !isSearching }) {
+                Icon(
+                    imageVector = if (isSearching) Icons.Default.Close else Icons.Default.Search,
+                    contentDescription = "Rechercher"
+                )
+            }
+        }
+    )
 }
