@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.*
@@ -115,37 +116,64 @@ import com.insa.mygamelist.ui.theme.MyGamesListTheme
         }
     }
 
-
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun GameListScreen(navController: NavHostController){
+fun GameListScreen(navController: NavHostController) {
+    var searchText by remember { mutableStateOf("") }
+
     MyGamesListTheme {
-        Scaffold(topBar = { SearchAppBar() }
-            , modifier = Modifier.fillMaxSize()) { innerPadding ->
-            LazyColumn (modifier =  Modifier.padding(innerPadding)) {
-                items(IGDB.games) { game ->
-                    Log.d("TAG", "GameId" + (game.id).toString())
-                    GameItem(game, { navController.navigate(Details(game.id)) })
+        Scaffold(
+            topBar = { SearchAppBar(searchText) { searchText = it } },
+            modifier = Modifier.fillMaxSize()
+        ) { innerPadding ->
+            val filteredGames = IGDB.games.filter { game ->
+                game.name.contains(searchText, ignoreCase = true) ||
+                        game.genres.any { genreId ->
+                            val genre = IGDB.genres.find { it.id == genreId }
+                            genre?.name?.contains(searchText, ignoreCase = true) == true
+                        }||
+                        game.platforms.any { platformId ->
+                            val platform = IGDB.platforms.find { it.id == platformId }
+                            platform?.name?.contains(searchText, ignoreCase = true) == true
+                        }
+            }
+            if(filteredGames.isEmpty()){
+                Column(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
+                    Text(
+                        "No match :(",
+                        textAlign = TextAlign.Center
+                    )
+                }
+
+            }
+            else{
+                LazyColumn(modifier = Modifier.padding(innerPadding)) {
+                    items(filteredGames) { game ->
+                        Log.d("TAG", "GameId" + (game.id).toString())
+                        GameItem(game) { navController.navigate(Details(game.id)) }
+                    }
                 }
             }
+
         }
     }
 }
 
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SearchAppBar() {
-    var searchText by remember { mutableStateOf("") }
+fun SearchAppBar(searchText: String, onSearchTextChange: (String) -> Unit) {
     var isSearching by remember { mutableStateOf(false) }
 
     TopAppBar(
+        colors = topAppBarColors(
+            containerColor = Color.Cyan,
+            titleContentColor = Color.Black,
+        ),
         title = {
             if (isSearching) {
                 TextField(
                     value = searchText,
-                    onValueChange = { searchText = it },
+                    onValueChange = onSearchTextChange,
                     placeholder = { Text("Rechercher...") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
