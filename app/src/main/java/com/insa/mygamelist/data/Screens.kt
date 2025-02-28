@@ -210,8 +210,7 @@ fun TagFilterBar(tags: List<String>, selectedTags: List<String>, onTagSelected: 
     ) {
         Icon(
             imageVector =Icons.AutoMirrored.Filled.List,
-            contentDescription = "Show Filter",
-            tint = if (filterByTag) Color.LightGray else Color.White
+            contentDescription = "Show Filter"
         )
     }
     if (filterByTag) {
