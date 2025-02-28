@@ -5,6 +5,8 @@ import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.insa.mygamelist.R
+import java.io.BufferedReader
+import java.io.InputStreamReader
 
 object IGDB {
 
@@ -27,8 +29,9 @@ object IGDB {
         genres = loadData(context, R.raw.genres, object : TypeToken<List<Genre>>(){})
         platforms_logos = loadData(context, R.raw.platform_logos, object : TypeToken<List<PlatformLogos>>(){})
         platforms = loadData(context, R.raw.platforms, object : TypeToken<List<Platforms>>(){})
+        val favoriteGameIds = readFileFromInternalStorage(context, "favorite_game_ids.txt")
         for (game in games) {
-            game.is_favorite = false
+            game.is_favorite = favoriteGameIds.contains(game.id)
         }
     }
 }
@@ -43,3 +46,23 @@ data class Genre(val id:Long,val name:String)
 data class PlatformLogos(val id:Long, val url:String)
 
 data class Platforms(val id:Long,val name:String,val platform_logo:Long)
+
+
+fun readFileFromInternalStorage(context: Context, fileName: String): List<Long> {
+    val favoriteGameIds = mutableListOf<Long>()
+    try {
+        val fileInputStream = context.openFileInput(fileName)
+        val reader = BufferedReader(InputStreamReader(fileInputStream))
+        var line: String?
+
+        while (reader.readLine().also { line = it } != null) {
+            line?.toLongOrNull()?.let { favoriteGameIds.add(it) }
+        }
+
+        reader.close()
+        Log.d("TAG", "IDs des jeux favoris lus : $favoriteGameIds")
+    } catch (e: Exception) {
+        e.printStackTrace()
+    }
+    return favoriteGameIds
+}
