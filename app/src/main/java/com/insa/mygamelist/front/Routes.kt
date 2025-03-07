@@ -7,4 +7,4 @@ import kotlinx.serialization.Serializable
 object GameList
 
 @Serializable
-data class Details(val gameId:Long)
+data class Details(val gameId: Long)

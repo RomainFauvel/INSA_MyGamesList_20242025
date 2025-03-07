@@ -96,7 +96,7 @@ fun GameItem(game: Game, onClick: () -> Unit) {
 }
 
 
-fun getUrl(coverId : Long) : String {
-    val cover = IGDB.covers.find { it.id == coverId}
+fun getUrl(coverId: Long) : String {
+    val cover = IGDB.covers.find { it.id == coverId }
     return cover?.url?:"//images.igdb.com/igdb/image/upload/t_cover_big/ul5wwtyyqzh06j98agmx.jpg"
 }
