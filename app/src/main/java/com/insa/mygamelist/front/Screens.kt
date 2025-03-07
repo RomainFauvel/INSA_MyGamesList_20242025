@@ -1,4 +1,4 @@
-package com.insa.mygamelist.data
+package com.insa.mygamelist.front
 import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -10,7 +10,6 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
@@ -27,7 +26,71 @@ import androidx.navigation.NavHostController
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
+import com.insa.mygamelist.data.IGDB
 import com.insa.mygamelist.ui.theme.MyGamesListTheme
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun GameListScreen(navController: NavHostController) {
+    var searchText by rememberSaveable { mutableStateOf("") }
+    var selectedTags by rememberSaveable { mutableStateOf(listOf<String>()) }
+
+    val predefinedTags = IGDB.genres.map { it.name }.sorted()
+
+    MyGamesListTheme {
+        Scaffold(
+            topBar = {
+                Column {
+                    SearchAppBar(searchText) { searchText = it }
+                    TagFilterBar(predefinedTags, selectedTags) { tag ->
+                        selectedTags = if (selectedTags.contains(tag)) {
+                            selectedTags - tag
+                        } else {
+                            selectedTags + tag
+                        }
+                    }
+                }
+            },
+            modifier = Modifier.fillMaxSize()
+        ) { innerPadding ->
+            val filteredGames = IGDB.games.filter { game ->
+                (game.name.contains(searchText, ignoreCase = true) ||
+                        game.genres.any { genreId ->
+                            val genre = IGDB.genres.find { it.id == genreId }
+                            genre?.name?.contains(searchText, ignoreCase = true) == true
+                        } ||
+                        game.platforms.any { platformId ->
+                            val platform = IGDB.platforms.find { it.id == platformId }
+                            platform?.name?.contains(searchText, ignoreCase = true) == true
+                        }) &&
+                        (selectedTags.isEmpty() || selectedTags.all { tag ->
+                            game.genres.any { genreId ->
+                                val genre = IGDB.genres.find { it.id == genreId }
+                                genre?.name == tag
+                            }
+                        })
+            }
+            if (filteredGames.isEmpty()) {
+                Column(modifier = Modifier
+                    .padding(innerPadding)
+                    .fillMaxSize()) {
+                    Text(
+                        "No match :(",
+                        textAlign = TextAlign.Center
+                    )
+                }
+            } else {
+                LazyColumn(modifier = Modifier.padding(innerPadding)) {
+                    items(filteredGames) { game ->
+                        Log.d("TAG", "GameId" + (game.id).toString())
+                        GameItem(game) { navController.navigate(Details(game.id)) }
+                    }
+                }
+            }
+        }
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -135,67 +198,6 @@ fun DetailsScreen(navController: NavHostController, itemId: Long) {
 }
 
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun GameListScreen(navController: NavHostController) {
-    var searchText by rememberSaveable { mutableStateOf("") }
-    var selectedTags by rememberSaveable { mutableStateOf(listOf<String>()) }
-
-    val predefinedTags = IGDB.genres.map { it.name }.sorted()
-
-    MyGamesListTheme {
-        Scaffold(
-            topBar = {
-                Column {
-                    SearchAppBar(searchText) { searchText = it }
-                    TagFilterBar(predefinedTags, selectedTags) { tag ->
-                        selectedTags = if (selectedTags.contains(tag)) {
-                            selectedTags - tag
-                        } else {
-                            selectedTags + tag
-                        }
-                    }
-                }
-            },
-            modifier = Modifier.fillMaxSize()
-        ) { innerPadding ->
-            val filteredGames = IGDB.games.filter { game ->
-                (game.name.contains(searchText, ignoreCase = true) ||
-                        game.genres.any { genreId ->
-                            val genre = IGDB.genres.find { it.id == genreId }
-                            genre?.name?.contains(searchText, ignoreCase = true) == true
-                        } ||
-                        game.platforms.any { platformId ->
-                            val platform = IGDB.platforms.find { it.id == platformId }
-                            platform?.name?.contains(searchText, ignoreCase = true) == true
-                        }) &&
-                        (selectedTags.isEmpty() || selectedTags.all { tag ->
-                            game.genres.any { genreId ->
-                                val genre = IGDB.genres.find { it.id == genreId }
-                                genre?.name == tag
-                            }
-                        })
-            }
-            if (filteredGames.isEmpty()) {
-                Column(modifier = Modifier
-                    .padding(innerPadding)
-                    .fillMaxSize()) {
-                    Text(
-                        "No match :(",
-                        textAlign = TextAlign.Center
-                    )
-                }
-            } else {
-                LazyColumn(modifier = Modifier.padding(innerPadding)) {
-                    items(filteredGames) { game ->
-                        Log.d("TAG", "GameId" + (game.id).toString())
-                        GameItem(game) { navController.navigate(Details(game.id)) }
-                    }
-                }
-            }
-        }
-    }
-}
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TagFilterBar(tags: List<String>, selectedTags: List<String>, onTagSelected: (String) -> Unit) {

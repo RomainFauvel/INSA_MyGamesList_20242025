@@ -1,4 +1,4 @@
-package com.insa.mygamelist.data
+package com.insa.mygamelist.front
 
 import kotlinx.serialization.Serializable
 
