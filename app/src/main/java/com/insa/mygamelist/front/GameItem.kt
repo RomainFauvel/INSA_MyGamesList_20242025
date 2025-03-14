@@ -30,11 +30,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.insa.mygamelist.data.Game
-import com.insa.mygamelist.data.IGDB
+import com.insa.mygamelist.data.IGDBRepository
 
 @Composable
 fun GameItem(game: Game, onClick: () -> Unit) {
     var isFavorite by remember { mutableStateOf(game.is_favorite) }
+
+    val igdb=IGDBRepository
 
     Box(
         modifier = Modifier
@@ -67,7 +69,7 @@ fun GameItem(game: Game, onClick: () -> Unit) {
                 )
                 Text(
                     "Genres: " + game.genres.mapNotNull { genreId ->
-                        IGDB.genres.find { it.id == genreId }?.name
+                        igdb.genres.value.find { it.id == genreId }?.name
                     }.joinToString(", "),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -97,6 +99,6 @@ fun GameItem(game: Game, onClick: () -> Unit) {
 
 
 fun getUrl(coverId: Long) : String {
-    val cover = IGDB.covers.find { it.id == coverId }
+    val cover = IGDBRepository.covers.value.find { it.id == coverId }
     return cover?.url?:"//images.igdb.com/igdb/image/upload/t_cover_big/ul5wwtyyqzh06j98agmx.jpg"
 }

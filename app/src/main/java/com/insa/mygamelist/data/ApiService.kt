@@ -2,25 +2,25 @@ package com.insa.mygamelist.data
 
 
 import android.provider.MediaStore.Audio.Genres
+import okhttp3.RequestBody
 import retrofit2.Response
 import retrofit2.http.*
 
 interface ApiService {
 
-    @GET("game")
-    suspend fun getGames(): List<Game>
+    @POST("games")
+    suspend fun getGames(@Body body: RequestBody): List<Game>
 
-    @GET("genres")
-    suspend fun getGenres(): List<Genres>
+    @POST("genres")
+    suspend fun getGenres(@Body body: RequestBody): List<Genre>
 
-    @GET("covers")
-    suspend fun getCovers(): List<Cover>
+    @POST("covers")
+    suspend fun getCovers(@Body body: RequestBody ): List<Cover>
 
-    @GET("platforms")
-    suspend fun getPlatforms(): List<Platforms>
+    @POST("platforms")
+    suspend fun getPlatforms(@Body body: RequestBody): List<Platforms>
 
-    @GET("platform_logos")
-    suspend fun getPlaformLogos(): List<PlatformLogos>
-
+    @POST("platform_logos")
+    suspend fun getPlatformLogos(@Body body: RequestBody): List<PlatformLogos>
 
 }

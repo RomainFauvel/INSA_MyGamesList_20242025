@@ -7,16 +7,21 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.material3.ExperimentalMaterial3Api
-import com.insa.mygamelist.data.IGDB
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import com.insa.mygamelist.data.ApiClient
+import com.insa.mygamelist.data.ApiService
 import com.insa.mygamelist.front.Details
 import com.insa.mygamelist.front.DetailsScreen
 import com.insa.mygamelist.front.GameList
 import com.insa.mygamelist.front.GameListScreen
-import com.insa.mygamelist.data.IGDB.games
+import com.insa.mygamelist.data.IGDBRepository
+import kotlinx.coroutines.launch
 import java.io.BufferedWriter
 import java.io.OutputStreamWriter
 
@@ -24,11 +29,15 @@ import java.io.OutputStreamWriter
 @OptIn(ExperimentalMaterial3Api::class)
 class MainActivity : ComponentActivity() {
 
+    val igdb = IGDBRepository
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        IGDB.load2(this)
-
+        lifecycleScope.launch{
+            igdb.load(applicationContext)
+        }
+        
         enableEdgeToEdge()
         setContent {
 
@@ -51,7 +60,7 @@ class MainActivity : ComponentActivity() {
     }
 
     fun writeFavoriteGamesIdsToFile(context: Context, fileName: String) {
-        val favoriteGamesIds = games.filter { it.is_favorite }.map { it.id }
+        val favoriteGamesIds = igdb.games.value.filter { it.is_favorite }.map { it.id }
         Log.d("TAG", "Liste de favoris" + favoriteGamesIds.toString())
         val content = favoriteGamesIds.joinToString("\n")
 

@@ -2,25 +2,21 @@ package com.insa.mygamelist.data
 
 import android.content.Context
 import android.util.Log
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
-import com.insa.mygamelist.R
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
-import okhttp3.Dispatcher
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.BufferedReader
 import java.io.InputStreamReader
 
-class IGDBRepository(private val apiService: ApiService){
+object IGDBRepository{
 
+    val apiService=ApiClient.apiService
     private val _games = MutableStateFlow<List<Game>>(emptyList())
     val games: StateFlow<List<Game>> = _games
 
@@ -36,21 +32,26 @@ class IGDBRepository(private val apiService: ApiService){
     private val _platformLogos = MutableStateFlow<List<PlatformLogos>>(emptyList())
     val platformLogos: StateFlow<List<PlatformLogos>> = _platformLogos
 
-    suspend fun load() {
+    suspend fun load(context: Context) {
         withContext(Dispatchers.IO) {
             try {
                 coroutineScope {
-                    val gamesDeferred = async { apiService.getGames() }
-                    val coversDeferred = async { apiService.getCovers() }
-                    val genresDeferred = async { apiService.getGenres() }
-                    val platformsDeferred = async { apiService.getPlatforms() }
-                    val platformLogosDeferred = async { apiService.getPlaformLogos() }
+                    val gamesDeferred = async { apiService.getGames(body="fields id, cover, first_release_date, genres, name, platforms, summary, total_rating; where id != null & cover != null & first_release_date != null & genres != null & name != null & platforms != null & summary != null & total_rating != null;".toRequestBody("text/plain".toMediaTypeOrNull())) }
+                    val coversDeferred = async { apiService.getCovers(body="fields id, url; where id != null & url != null;".toRequestBody("text/plain".toMediaTypeOrNull())) }
+                    val genresDeferred = async { apiService.getGenres(body="fields id, name; where id != null & name != null;".toRequestBody("text/plain".toMediaTypeOrNull())) }
+                    val platformsDeferred = async { apiService.getPlatforms(body="fields id, name, platform_logo; where id != null & name != null & platform_logo != null;".toRequestBody("text/plain".toMediaTypeOrNull())) }
+                    val platformLogosDeferred = async { apiService.getPlatformLogos(body = "fields id, url; where id != null & url != null;".toRequestBody("text/plain".toMediaTypeOrNull())) }
 
                     _games.value = gamesDeferred.await()
                     _covers.value = coversDeferred.await()
                     _genres.value = genresDeferred.await()
                     _platforms.value = platformsDeferred.await()
                     _platformLogos.value = platformLogosDeferred.await()
+
+                    val favoriteGameIds = readFileFromInternalStorage(context, "favorite_game_ids.txt")
+                    for (game in _games.value) {
+                        game.is_favorite = favoriteGameIds.contains(game.id)
+                    }
                 }
             } catch (e: Exception) {
                 Log.e("IGDBRepository", "Erreur lors de la récupération des données", e)
@@ -64,7 +65,7 @@ data class Cover(val id: Long, val url: String)
 
 @Serializable
 data class Game(val id: Long, val cover: Long, val first_release_date: Long, val genres: List<Long>,
-                val name: String, val platforms : List<Long>, val summary: String, val toal_rating: Float, var is_favorite: Boolean)
+                val name: String, val platforms : List<Long>, val summary: String, val total_rating: Float, var is_favorite: Boolean = false)
 
 @Serializable
 data class Genre(val id:Long,val name:String)

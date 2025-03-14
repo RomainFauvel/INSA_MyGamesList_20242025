@@ -26,7 +26,7 @@ import androidx.navigation.NavHostController
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
-import com.insa.mygamelist.data.IGDB
+import com.insa.mygamelist.data.IGDBRepository
 import com.insa.mygamelist.ui.theme.MyGamesListTheme
 
 
@@ -36,7 +36,13 @@ fun GameListScreen(navController: NavHostController) {
     var searchText by rememberSaveable { mutableStateOf("") }
     var selectedTags by rememberSaveable { mutableStateOf(listOf<String>()) }
 
-    val predefinedTags = IGDB.genres.map { it.name }.sorted()
+    val igdb=IGDBRepository
+
+    val games by igdb.games.collectAsState()
+    val genres by igdb.genres.collectAsState()
+    val platforms by igdb.platforms.collectAsState()
+
+    val predefinedTags = remember(genres) {genres.map { it.name }.sorted()}
 
     MyGamesListTheme {
         Scaffold(
@@ -54,22 +60,26 @@ fun GameListScreen(navController: NavHostController) {
             },
             modifier = Modifier.fillMaxSize()
         ) { innerPadding ->
-            val filteredGames = IGDB.games.filter { game ->
-                (game.name.contains(searchText, ignoreCase = true) ||
-                        game.genres.any { genreId ->
-                            val genre = IGDB.genres.find { it.id == genreId }
-                            genre?.name?.contains(searchText, ignoreCase = true) == true
-                        } ||
-                        game.platforms.any { platformId ->
-                            val platform = IGDB.platforms.find { it.id == platformId }
-                            platform?.name?.contains(searchText, ignoreCase = true) == true
-                        }) &&
-                        (selectedTags.isEmpty() || selectedTags.all { tag ->
+            val filteredGames = remember(searchText, selectedTags, games, genres, platforms)
+            {
+                games.filter { game ->
+                    (game.name.contains(searchText, ignoreCase = true) ||
                             game.genres.any { genreId ->
-                                val genre = IGDB.genres.find { it.id == genreId }
-                                genre?.name == tag
-                            }
-                        })
+                                val genre = genres.find { it.id == genreId }
+                                genre?.name?.contains(searchText, ignoreCase = true) == true
+                            } ||
+                            game.platforms.any { platformId ->
+                                val platform = platforms.find { it.id == platformId }
+                                platform?.name?.contains(searchText, ignoreCase = true) == true
+                            }) &&
+                            (selectedTags.isEmpty() || selectedTags.all { tag ->
+                                game.genres.any { genreId ->
+                                    val genre = genres.find { it.id == genreId }
+                                    genre?.name == tag
+                                }
+                            })
+
+            }
             }
             if (filteredGames.isEmpty()) {
                 Column(modifier = Modifier
@@ -95,7 +105,15 @@ fun GameListScreen(navController: NavHostController) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DetailsScreen(navController: NavHostController, itemId: Long) {
-    val game = IGDB.games.find { it.id == itemId }
+
+    val igdb=IGDBRepository
+
+    val games by igdb.games.collectAsState()
+    val genres by igdb.genres.collectAsState()
+    val platforms by igdb.platforms.collectAsState()
+    val platforms_logos by igdb.platformLogos.collectAsState()
+
+    val game = remember(games) { games.find { it.id == itemId } }
 
     var isFavorite by remember { mutableStateOf(game?.is_favorite ?: false) }
 
@@ -156,7 +174,7 @@ fun DetailsScreen(navController: NavHostController, itemId: Long) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = it.genres.mapNotNull { genreId ->
-                            IGDB.genres.find { genre -> genre.id == genreId }?.name
+                            genres.find { genre -> genre.id == genreId }?.name
                         }.joinToString(", "),
                         fontStyle = FontStyle.Italic
                     )
@@ -168,8 +186,8 @@ fun DetailsScreen(navController: NavHostController, itemId: Long) {
             }
 
             item {
-                val platformLogosIds = game?.platforms?.mapNotNull { p -> IGDB.platforms.find { it.id == p }?.platform_logo }
-                val platformLogos = platformLogosIds?.mapNotNull { id -> IGDB.platforms_logos.find { it.id == id } }
+                val platformLogosIds = game?.platforms?.mapNotNull { p -> platforms.find { it.id == p }?.platform_logo }
+                val platformLogos = platformLogosIds?.mapNotNull { id -> platforms_logos.find { it.id == id } }
 
                 LazyRow(
                     modifier = Modifier.fillMaxWidth(),
