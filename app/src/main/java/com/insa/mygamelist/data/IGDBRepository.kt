@@ -3,7 +3,6 @@ package com.insa.mygamelist.data
 import android.content.Context
 import android.util.Log
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -36,22 +35,51 @@ object IGDBRepository{
         withContext(Dispatchers.IO) {
             try {
                 coroutineScope {
-                    val gamesDeferred = async { apiService.getGames(body="fields id, cover, first_release_date, genres, name, platforms, summary, total_rating; where id != null & cover != null & first_release_date != null & genres != null & name != null & platforms != null & summary != null & total_rating != null;".toRequestBody("text/plain".toMediaTypeOrNull())) }
-                    val coversDeferred = async { apiService.getCovers(body="fields id, url; where id != null & url != null;".toRequestBody("text/plain".toMediaTypeOrNull())) }
-                    val genresDeferred = async { apiService.getGenres(body="fields id, name; where id != null & name != null;".toRequestBody("text/plain".toMediaTypeOrNull())) }
-                    val platformsDeferred = async { apiService.getPlatforms(body="fields id, name, platform_logo; where id != null & name != null & platform_logo != null;".toRequestBody("text/plain".toMediaTypeOrNull())) }
-                    val platformLogosDeferred = async { apiService.getPlatformLogos(body = "fields id, url; where id != null & url != null;".toRequestBody("text/plain".toMediaTypeOrNull())) }
 
-                    _games.value = gamesDeferred.await()
-                    _covers.value = coversDeferred.await()
-                    _genres.value = genresDeferred.await()
-                    _platforms.value = platformsDeferred.await()
-                    _platformLogos.value = platformLogosDeferred.await()
+                    val games =
+                        apiService.getGames(
+                            body = "fields id, cover, first_release_date, genres, name, platforms, summary, total_rating; where id != null & cover != null & first_release_date != null & genres != null & name != null & platforms != null & summary != null & total_rating != null;".toRequestBody(
+                                "application/json".toMediaTypeOrNull()
+                            )
+                        )
+                    val coverIds = games.map { it.cover }.distinct()
+                    val genreIds = games.flatMap { it.genres }.distinct()
+                    val platformIds = games.flatMap { it.platforms }.distinct()
 
-                    val favoriteGameIds = readFileFromInternalStorage(context, "favorite_game_ids.txt")
-                    for (game in _games.value) {
+                    _platforms.value = apiService.getPlatforms(
+                        body = "fields id, name, platform_logo; where id = (${platformIds.joinToString()}) & id != null & name != null & platform_logo != null;".toRequestBody(
+                            "application/json".toMediaTypeOrNull()
+                        )
+                    )
+
+                    val platformLogosIds = _platforms.value.map { it.platform_logo }
+
+                    _covers.value = apiService.getCovers(
+                        body = "fields id, url; where id = (${coverIds.joinToString()}) & url != null;".toRequestBody(
+                            "application/json".toMediaTypeOrNull()
+                        )
+                    )
+
+                    _genres.value = apiService.getGenres(
+                        body = "fields id, name; where id = (${genreIds.joinToString()}) & name != null;".toRequestBody(
+                            "application/json".toMediaTypeOrNull()
+                        )
+                    )
+
+                    _platformLogos.value = apiService.getPlatformLogos(
+                        body = "fields id, url; where id = (${platformLogosIds.joinToString()}) & id != null & url != null;".toRequestBody(
+                            "application/json".toMediaTypeOrNull()
+                        )
+                    )
+
+
+                    val favoriteGameIds =
+                        readFileFromInternalStorage(context, "favorite_game_ids.txt")
+                    for (game in games) {
                         game.is_favorite = favoriteGameIds.contains(game.id)
                     }
+
+                    _games.value = games
                 }
             } catch (e: Exception) {
                 Log.e("IGDBRepository", "Erreur lors de la récupération des données", e)
